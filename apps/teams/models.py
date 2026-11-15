@@ -1,6 +1,8 @@
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db import models
+from .managers import MembershipManager, RoleManager, TeamManager
+
 
 
 class RoleName(models.TextChoices):
@@ -9,16 +11,15 @@ class RoleName(models.TextChoices):
     LEADER = "leader", "Leader"
     TESTER = "tester", "Tester"
 
-
 class Role(models.Model):
     name = models.CharField(max_length=50, unique=True)
+    objects = RoleManager()
 
     class Meta:
         ordering = ["name"]
 
     def __str__(self) -> str:
         return self.name
-    #Label in spanish
     @property
     def label(self) -> str:
         """Spanish label shown in the UI. The stored name stays in English."""
@@ -36,27 +37,13 @@ class Team(models.Model):
     members = models.ManyToManyField(
         settings.AUTH_USER_MODEL, through="Membership", related_name="teams"
     )
+    objects = TeamManager()
 
     class Meta:
         ordering = ["name"]
 
     def __str__(self) -> str:
         return self.name
-
-    def _members_with_role(self, role_name: str):
-        return get_user_model().objects.filter(
-            is_active=True,
-            memberships__team=self,
-            memberships__role__name=role_name,
-        )
-
-    @property
-    def leaders(self):
-        return self._members_with_role(RoleName.LEADER)
-
-    @property
-    def testers(self):
-        return self._members_with_role(RoleName.TESTER)
 
 
 class Membership(models.Model):
@@ -72,6 +59,7 @@ class Membership(models.Model):
     team = models.ForeignKey(Team, on_delete=models.PROTECT, related_name="memberships")
     role = models.ForeignKey(Role, on_delete=models.PROTECT, related_name="memberships")
     created_at = models.DateTimeField(auto_now_add=True)
+    objects = MembershipManager()
 
     class Meta:
         constraints = [

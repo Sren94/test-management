@@ -1,0 +1,75 @@
+{% url 'home' as home_url %}
+<header class="site-header">
+  <div class="site-header__bar">
+    <a class="site-header__brand" href="{{ home_url }}">Test Management</a>
+
+    <nav class="nav" aria-label="Principal">
+      <a class="nav__link" href="{{ home_url }}">Home</a>
+
+      <details class="menu">
+        <summary class="menu__toggle">
+          <span>Opciones</span>
+          <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+            <path fill="currentColor" d="M19.14 12.94a7.07 7.07 0 0 0 .06-.94 7.07 7.07 0 0 0-.06-.94l2.03-1.58a.5.5 0 0 0 .12-.64l-1.92-3.32a.5.5 0 0 0-.61-.22l-2.39.96a7.03 7.03 0 0 0-1.62-.94l-.36-2.54a.5.5 0 0 0-.5-.42h-3.84a.5.5 0 0 0-.5.42l-.36 2.54a7.03 7.03 0 0 0-1.62.94l-2.39-.96a.5.5 0 0 0-.61.22L2.7 8.84a.5.5 0 0 0 .12.64l2.03 1.58a7.07 7.07 0 0 0-.06.94c0 .32.02.63.06.94L2.82 14.52a.5.5 0 0 0-.12.64l1.92 3.32c.13.22.39.31.61.22l2.39-.96c.5.38 1.05.7 1.62.94l.36 2.54c.04.24.25.42.5.42h3.84c.25 0 .46-.18.5-.42l.36-2.54a7.03 7.03 0 0 0 1.62-.94l2.39.96c.23.09.48 0 .61-.22l1.92-3.32a.5.5 0 0 0-.12-.64l-2.03-1.58ZM12 15.6A3.6 3.6 0 1 1 12 8.4a3.6 3.6 0 0 1 0 7.2Z"/>
+          </svg>
+          <span class="menu__caret" aria-hidden="true"></span>
+        </summary>
+
+        <ul class="menu__list">
+          {% if user.is_admin %}
+            <li><a class="menu__item" href="#">Crear equipo</a></li>
+            <li><a class="menu__item" href="#">Asignar testers</a></li>
+          {% endif %}
+          <li><a class="menu__item" href="{% url 'accounts:password_change' %}">Cambiar contraseña</a></li>
+          <li>
+            <form method="post" action="{% url 'accounts:logout' %}">
+              {% csrf_token %}
+              <button class="menu__item" type="submit">Cerrar sesión</button>
+            </form>
+          </li>
+        </ul>
+      </details>
+    </nav>
+  </div>
+
+   <dl class="profile">
+    <div class="profile__row">
+      <dt>Nombre completo:</dt>
+      <dd>{{ user.get_full_name }}</dd>
+    </div>
+
+    <div class="profile__row">
+      <dt>Cargo:</dt>
+      <dd class="profile__badges">
+        {% if user.is_admin %}
+          <span class="badge badge--admin">Administrador</span>
+        {% else %}
+          {% regroup user.memberships.by_role by role.name as role_groups %}
+          {% for group in role_groups %}
+            <span class="badge badge--{{ group.grouper }}">{{ group.list.0.role.label }}</span>
+          {% empty %}
+            Sin cargo
+          {% endfor %}
+        {% endif %}
+      </dd>
+    </div>
+
+    <div class="profile__row">
+        <dt>Equipo:</dt>
+        <dd class="profile__badges">
+            {% if user.is_admin %}
+            Todos los equipos
+            {% else %}
+            {% for m in user.memberships.current %}
+                <span class="chip">
+                {{ m.team.name }}
+                <span class="badge badge--sm badge--{{ m.role.name }}">{{ m.role.label }}</span>
+                </span>
+            {% empty %}
+                Sin equipo
+            {% endfor %}
+            {% endif %}
+        </dd>
+        </div>
+    </dl>
+</header>

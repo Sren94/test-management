@@ -46,6 +46,15 @@
   --shadow-card: 0 8px 28px rgba(15, 31, 61, 0.1);
   --transition: 150ms ease;
   --focus-ring: 0 0 0 3px rgba(11, 91, 211, 0.35);
+    /* Role badges (light pills so they stand out on the blue header) */
+  --badge-admin-bg: #ffffff;
+  --badge-admin-text: #062f73;
+  --badge-leader-bg: #ffd24d;
+  --badge-leader-text: #4a3500;
+  --badge-tester-bg: #bfe9ff;
+  --badge-tester-text: #05425f;
+  --badge-default-bg: #e8f0fe;
+  --badge-default-text: #062f73;
 }
 
 /* ==========================================================================
@@ -298,4 +307,206 @@ a {
   * {
     transition: none !important;
   }
+}
+
+/* ==========================================================================
+   Site header: brand + navigation + profile summary
+   ========================================================================== */
+.site-header {
+  color: var(--color-on-primary);
+  background: var(--color-primary);
+}
+
+.site-header__bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-4) var(--space-5);
+}
+
+.site-header__brand {
+  font-size: var(--text-xl);
+  font-weight: 700;
+  color: var(--color-on-primary);
+  text-decoration: none;
+}
+
+.nav {
+  display: flex;
+  align-items: center;
+  gap: var(--space-5);
+}
+
+.nav__link {
+  padding: var(--space-1) 0;
+  font-weight: 500;
+  color: var(--color-on-primary);
+  text-decoration: none;
+  border-bottom: 2px solid transparent;
+  transition: border-color var(--transition);
+}
+
+.nav__link:hover {
+  border-bottom-color: var(--color-on-primary);
+}
+
+/* User dropdown */
+.menu {
+  position: relative;
+}
+
+.menu__toggle {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  font-weight: 500;
+  color: var(--color-on-primary);
+  list-style: none;
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  transition: background var(--transition);
+}
+
+.menu__toggle::-webkit-details-marker {
+  display: none;
+}
+
+.menu__toggle:hover,
+.menu[open] > .menu__toggle {
+  background: var(--color-primary-hover);
+}
+
+.menu__caret {
+  width: 0;
+  height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 6px solid currentColor;
+  transition: transform var(--transition);
+}
+
+.menu[open] .menu__caret {
+  transform: rotate(180deg);
+}
+
+.menu__list {
+  position: absolute;
+  right: 0;
+  top: calc(100% + var(--space-2));
+  z-index: 10;
+  min-width: 15rem;
+  margin: 0;
+  padding: var(--space-2);
+  list-style: none;
+  color: var(--color-ink);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
+}
+
+.menu__list li + li {
+  border-top: 1px solid var(--color-border);
+}
+
+.menu__list form {
+  margin: 0;
+}
+
+.menu__item {
+  display: block;
+  width: 100%;
+  padding: var(--space-3) var(--space-4);
+  font: inherit;
+  text-align: left;
+  color: var(--color-ink);
+  text-decoration: none;
+  background: none;
+  border: 0;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
+.menu__item:hover {
+  background: var(--color-primary-soft);
+}
+
+/* Profile summary (full name, teams) */
+.profile {
+  display: grid;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0 var(--space-5) var(--space-5);
+}
+
+.profile__row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.profile dt {
+  font-weight: 700;
+}
+
+.profile dd {
+  margin: 0;
+}
+
+.link-back {
+  display: inline-block;
+  margin-top: var(--space-4);
+  font-size: var(--text-sm);
+}
+/* ==========================================================================
+   Role badges and team chips
+   ========================================================================== */
+.profile__badges {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.badge {
+  display: inline-block;
+  padding: 0 var(--space-3);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  line-height: 1.6;
+  color: var(--badge-default-text);
+  background: var(--badge-default-bg);
+  border-radius: var(--radius-pill);
+}
+
+.badge--sm {
+  padding: 0 var(--space-2);
+  font-size: 0.75rem;
+}
+
+.badge--admin {
+  color: var(--badge-admin-text);
+  background: var(--badge-admin-bg);
+}
+
+.badge--leader {
+  color: var(--badge-leader-text);
+  background: var(--badge-leader-bg);
+}
+
+.badge--tester {
+  color: var(--badge-tester-text);
+  background: var(--badge-tester-bg);
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 0 var(--space-1) 0 var(--space-3);
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  border-radius: var(--radius-pill);
 }

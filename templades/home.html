@@ -6,12 +6,6 @@
   <section class="card">
     <h2 class="section-title">Bienvenido, {{ user.first_name }}</h2>
     <p class="muted">Aquí aparecerán tus proyectos y pruebas.</p>
-
-    {# Temporary logout button: replaced by the header menu in step 8 #}
-    <form method="post" action="{% url 'accounts:logout' %}" style="margin-top: var(--space-4)">
-      {% csrf_token %}
-      <button class="btn" type="submit">Salir</button>
-    </form>
   </section>
 </main>
 {% endblock %}
