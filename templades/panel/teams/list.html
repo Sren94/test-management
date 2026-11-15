@@ -39,7 +39,7 @@
         <tbody>
           {% for t in teams %}
             <tr {% if not t.is_active %}class="row-inactive"{% endif %}>
-              <td>{{ t.name }}</td>
+              <td><a href="{% url 'panel:team_detail' t.pk %}">{{ t.name }}</a></td>
               <td>{{ t.leaders_count }}</td>
               <td>{{ t.testers_count }}</td>
               <td>
@@ -47,6 +47,7 @@
               </td>
               <td>
                 <div class="table__actions">
+                  <a class="btn btn--sm" href="{% url 'panel:team_detail' t.pk %}">Integrantes</a>
                   <a class="btn btn--sm btn--secondary" href="{% url 'panel:team_edit' t.pk %}">Editar</a>
                   <form method="post" action="{% url 'panel:team_toggle' t.pk %}">
                     {% csrf_token %}

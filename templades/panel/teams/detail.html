@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block title %}{{ team.name }} · Test Management{% endblock %}
+
+{% block content %}
+<main class="page">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">{{ team.name }}</h1>
+      {% if team.is_active %}
+        <span class="status status--active">Activo</span>
+      {% else %}
+        <span class="status status--inactive">Inactivo</span>
+      {% endif %}
+    </div>
+    <a class="btn btn--secondary" href="{% url 'panel:team_list' %}">← Volver a equipos</a>
+  </div>
+
+  <section class="card">
+    <h2 class="section-title">Integrantes</h2>
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Nombre</th>
+            <th>Usuario</th>
+            <th>Cargo en este equipo</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for m in memberships %}
+            <tr {% if not m.user.is_active %}class="row-inactive"{% endif %}>
+              <td>
+                {{ m.user.get_full_name }}
+                {% if not m.user.is_active %}<span class="status status--inactive">(inactivo)</span>{% endif %}
+              </td>
+              <td>{{ m.user.username }}</td>
+              <td>
+                <form class="inline-form" method="post" action="{% url 'panel:membership_role' team.pk m.pk %}">
+                  {% csrf_token %}
+                  <span class="badge badge--{{ m.role.name }}">{{ m.role.label }}</span>
+                  <select name="role" aria-label="Cargo de {{ m.user.get_full_name }}">
+                    {% for r in roles %}
+                      <option value="{{ r.pk }}" {% if r.pk == m.role_id %}selected{% endif %}>{{ r.label }}</option>
+                    {% endfor %}
+                  </select>
+                  <button class="btn btn--sm btn--secondary" type="submit">Cambiar</button>
+                </form>
+              </td>
+              <td>
+                <form method="post" action="{% url 'panel:membership_remove' team.pk m.pk %}"
+                      onsubmit="return confirm('¿Quitar a {{ m.user.get_full_name|escapejs }} de este equipo?');">
+                  {% csrf_token %}
+                  <button class="btn btn--sm btn--danger" type="submit">Quitar</button>
+                </form>
+              </td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="4" class="muted">Este equipo aún no tiene integrantes.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="card form-card">
+    <h2 class="section-title">Agregar persona</h2>
+    {% if add_form.fields.user.queryset.exists %}
+      <form method="post" novalidate>
+        {% csrf_token %}
+        {% for field in add_form %}{% include "includes/field.html" %}{% endfor %}
+        <div class="form-actions">
+          <button class="btn" type="submit">Agregar al equipo</button>
+        </div>
+      </form>
+    {% else %}
+      <p class="muted">No hay usuarios activos disponibles para agregar. Crea uno en <a href="{% url 'panel:user_list' %}">Usuarios</a>.</p>
+    {% endif %}
+  </section>
+</main>
+{% endblock %}

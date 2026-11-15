@@ -83,6 +83,20 @@ class MembershipQuerySet(models.QuerySet):
         """Active memberships ordered by role, then team (for grouping by role)."""
         return self.active().with_details().order_by("role__name", "team__name")
 
+    def roster(self, team):
+        """Everyone in a team (also inactive users), leaders first."""
+        return (
+            self.filter(team=team)
+            .select_related("user", "role")
+            .order_by("role__name", "user__first_name", "user__last_name")
+        )
+
+    def set_role(self, role):
+        """Changes the role of these memberships (only the matching rows)."""
+        return self.update(role=role)
+
 
 class MembershipManager(models.Manager.from_queryset(MembershipQuerySet)):
-    pass
+    def assign(self, *, user, team, role):
+        """Puts a user in a team with a role. The role belongs to this team only."""
+        return self.create(user=user, team=team, role=role)

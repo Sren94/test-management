@@ -15,4 +15,15 @@ urlpatterns = [
     path("teams/new/", views.TeamCreateView.as_view(), name="team_create"),
     path("teams/<int:pk>/edit/", views.TeamUpdateView.as_view(), name="team_edit"),
     path("teams/<int:pk>/toggle/", views.TeamToggleActiveView.as_view(), name="team_toggle"),
+    path("teams/<int:pk>/", views.TeamDetailView.as_view(), name="team_detail"),
+    path(
+        "teams/<int:pk>/members/<int:membership_pk>/role/",
+        views.MembershipRoleView.as_view(),
+        name="membership_role",
+    ),
+    path(
+        "teams/<int:pk>/members/<int:membership_pk>/remove/",
+        views.MembershipRemoveView.as_view(),
+        name="membership_remove",
+    ),
 ]

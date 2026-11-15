@@ -1,7 +1,7 @@
 from django import forms
 
 from apps.accounts.models import User
-from apps.teams.models import Team
+from apps.teams.models import Membership, Role, Team
 
 
 class UserCreateForm(forms.ModelForm):
@@ -56,3 +56,30 @@ class TeamForm(forms.ModelForm):
         if Team.objects.name_exists(name, exclude_pk=self.instance.pk):
             raise forms.ValidationError("Ya existe un equipo con ese nombre.")
         return name
+class RoleChoiceField(forms.ModelChoiceField):
+    def label_from_instance(self, role):
+        return role.label
+
+
+class MembershipAddForm(forms.Form):
+    """Adds a person to ONE team, choosing the role they will have there."""
+
+    user = forms.ModelChoiceField(label="Persona", queryset=User.objects.none())
+    role = RoleChoiceField(label="Cargo en este equipo", queryset=Role.objects.all())
+
+    def __init__(self, *args, team, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.team = team
+        users = User.objects.assignable_to(team).order_by("first_name", "last_name")
+        self.fields["user"].queryset = users
+        self.fields["user"].label_from_instance = lambda u: f"{u.get_full_name()} ({u.username})"
+
+    def save(self):
+        data = self.cleaned_data
+        return Membership.objects.assign(user=data["user"], team=self.team, role=data["role"])
+
+
+class MembershipRoleForm(forms.Form):
+    """Changes the role of one membership."""
+
+    role = RoleChoiceField(queryset=Role.objects.all())

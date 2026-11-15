@@ -30,6 +30,9 @@ class UserQuerySet(models.QuerySet):
         if status == "inactive":
             return self.inactive()
         return self
+    def assignable_to(self, team):
+        """Active, non-admin users that are not yet in the team."""
+        return self.active().filter(is_superuser=False).exclude(memberships__team=team)
 
     def with_memberships(self):
         """Loads memberships with team and role (no query per row)."""

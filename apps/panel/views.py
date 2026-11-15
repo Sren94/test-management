@@ -2,14 +2,13 @@ from django.contrib import messages
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse_lazy
 from django.views import View
-from django.views.generic import CreateView, FormView, ListView, UpdateView
+from django.views.generic import CreateView, DetailView, FormView, ListView, UpdateView
 
 from apps.accounts.models import User
-from apps.teams.models import Team
+from apps.teams.models import Membership, Role, Team
 
-from .forms import TeamForm, UserCreateForm, UserUpdateForm
+from .forms import *
 from .mixins import AdminRequiredMixin
-
 
 # --- Users ------------------------------------------------------------------
 class UserListView(AdminRequiredMixin, ListView):
@@ -144,3 +143,62 @@ class TeamToggleActiveView(AdminRequiredMixin, View):
             Team.objects.filter(pk=pk).activate()
             messages.success(request, f"Equipo {team.name} activado.")
         return redirect("panel:team_list")
+# --- Team members -----------------------------------------------------------
+class TeamDetailView(AdminRequiredMixin, DetailView):
+    """Team page: roster + form to add a person (this view also handles that POST)."""
+
+    model = Team
+    template_name = "panel/teams/detail.html"
+    context_object_name = "team"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.setdefault("add_form", MembershipAddForm(team=self.object))
+        context["memberships"] = Membership.objects.roster(self.object)
+        context["roles"] = Role.objects.all()
+        return context
+
+    def post(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        form = MembershipAddForm(request.POST, team=self.object)
+        if form.is_valid():
+            membership = form.save()
+            messages.success(
+                request,
+                f"{membership.user.get_full_name()} agregado a {self.object.name} "
+                f"como {membership.role.label}.",
+            )
+            return redirect("panel:team_detail", pk=self.object.pk)
+        return self.render_to_response(self.get_context_data(add_form=form))
+
+
+class MembershipRoleView(AdminRequiredMixin, View):
+    """Changes someone's role in THIS team only."""
+
+    def post(self, request, pk, membership_pk):
+        membership = get_object_or_404(
+            Membership.objects.select_related("user", "role"), pk=membership_pk, team_id=pk
+        )
+        form = MembershipRoleForm(request.POST)
+        if form.is_valid():
+            role = form.cleaned_data["role"]
+            Membership.objects.filter(pk=membership.pk).set_role(role)
+            messages.success(
+                request, f"{membership.user.get_full_name()} ahora es {role.label} en este equipo."
+            )
+        else:
+            messages.error(request, "Cargo no válido.")
+        return redirect("panel:team_detail", pk=pk)
+
+
+class MembershipRemoveView(AdminRequiredMixin, View):
+    """Removes someone from THIS team (their other teams are untouched)."""
+
+    def post(self, request, pk, membership_pk):
+        membership = get_object_or_404(
+            Membership.objects.select_related("user", "team"), pk=membership_pk, team_id=pk
+        )
+        name, team_name = membership.user.get_full_name(), membership.team.name
+        membership.delete()
+        messages.success(request, f"{name} fue quitado de {team_name}.")
+        return redirect("panel:team_detail", pk=pk)
