@@ -1,0 +1,301 @@
+/* ==========================================================================
+   Design tokens: change the look of the whole app by editing this block.
+   ========================================================================== */
+:root {
+  /* Brand (blue palette inspired by Telcel; no logo) */
+  --color-primary: #0b5bd3;
+  --color-primary-hover: #0848a8;
+  --color-primary-dark: #062f73;
+  --color-primary-soft: #e8f0fe;
+  --color-accent: #00a3e0;
+
+  /* Neutrals */
+  --color-ink: #0f1f3d;
+  --color-muted: #55657f;
+  --color-bg: #f3f6fb;
+  --color-surface: #ffffff;
+  --color-border: #d6deec;
+
+  /* Feedback */
+  --color-danger: #c62839;
+  --color-danger-soft: #fdecee;
+  --color-success: #1a8a52;
+  --color-success-soft: #e6f6ee;
+  --color-on-primary: #ffffff;
+
+  /* Typography */
+  --font-sans: "Segoe UI", system-ui, -apple-system, Roboto, "Helvetica Neue", Arial, sans-serif;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.25rem;
+  --text-xl: 1.75rem;
+  --text-2xl: 2.5rem;
+  --leading: 1.55;
+
+  /* Spacing, shape, motion */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --space-7: 3rem;
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-pill: 999px;
+  --shadow-card: 0 8px 28px rgba(15, 31, 61, 0.1);
+  --transition: 150ms ease;
+  --focus-ring: 0 0 0 3px rgba(11, 91, 211, 0.35);
+}
+
+/* ==========================================================================
+   Base
+   ========================================================================== */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: var(--font-sans);
+  font-size: var(--text-base);
+  line-height: var(--leading);
+  color: var(--color-ink);
+  background: var(--color-bg);
+}
+
+h1,
+h2,
+h3,
+p {
+  margin: 0;
+}
+
+a {
+  color: var(--color-primary);
+}
+
+:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+  border-radius: var(--radius-sm);
+}
+
+/* ==========================================================================
+   Components
+   ========================================================================== */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-5);
+  font: inherit;
+  font-weight: 600;
+  color: var(--color-on-primary);
+  background: var(--color-primary);
+  border: 2px solid var(--color-primary);
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  text-decoration: none;
+  transition: background var(--transition), border-color var(--transition);
+}
+
+.btn:hover {
+  background: var(--color-primary-hover);
+  border-color: var(--color-primary-hover);
+}
+
+.btn--block {
+  width: 100%;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+}
+
+.field label {
+  font-weight: 600;
+  font-size: var(--text-sm);
+}
+
+.field input {
+  width: 100%;
+  padding: var(--space-3) var(--space-4);
+  font: inherit;
+  color: var(--color-ink);
+  background: var(--color-surface);
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  transition: border-color var(--transition), box-shadow var(--transition);
+}
+
+.field input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: var(--focus-ring);
+}
+
+.field__help,
+.field__errors {
+  font-size: var(--text-sm);
+  color: var(--color-muted);
+}
+
+.field__errors {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: var(--color-danger);
+}
+
+.alert {
+  padding: var(--space-3) var(--space-4);
+  margin-bottom: var(--space-4);
+  font-size: var(--text-sm);
+  border-radius: var(--radius-sm);
+}
+
+.alert--error {
+  color: var(--color-danger);
+  background: var(--color-danger-soft);
+}
+
+.alert--success {
+  color: var(--color-success);
+  background: var(--color-success-soft);
+}
+
+.card {
+  padding: var(--space-5);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.muted {
+  color: var(--color-muted);
+}
+
+/* ==========================================================================
+   Page layout
+   ========================================================================== */
+.page {
+  width: min(100% - 2rem, 62rem);
+  margin: var(--space-6) auto;
+  display: grid;
+  gap: var(--space-5);
+}
+
+.section-title {
+  font-size: var(--text-lg);
+  margin-bottom: var(--space-2);
+}
+
+/* ==========================================================================
+   Auth screens (login): brand panel + form
+   ========================================================================== */
+.auth {
+  display: grid;
+  min-height: 100vh;
+  grid-template-columns: 1fr;
+}
+
+.auth__brand {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--space-4);
+  padding: var(--space-7) var(--space-6);
+  color: var(--color-on-primary);
+  background: var(--color-primary);
+}
+
+.auth__brand::before,
+.auth__brand::after {
+  content: "";
+  position: absolute;
+  border-radius: 50%;
+  background: var(--color-on-primary);
+  opacity: 0.1;
+}
+
+.auth__brand::before {
+  width: 340px;
+  height: 340px;
+  right: -120px;
+  bottom: -120px;
+}
+
+.auth__brand::after {
+  width: 160px;
+  height: 160px;
+  left: -50px;
+  top: -50px;
+  background: var(--color-accent);
+  opacity: 0.4;
+}
+
+.auth__brand > * {
+  position: relative;
+  z-index: 1;
+}
+
+.auth__headline {
+  font-size: var(--text-2xl);
+  line-height: 1.15;
+  max-width: 16ch;
+}
+
+.auth__lead {
+  max-width: 36ch;
+  opacity: 0.92;
+}
+
+.auth__panel {
+  display: grid;
+  place-items: center;
+  padding: var(--space-6) var(--space-4);
+}
+
+.auth__card {
+  width: min(100%, 26rem);
+  padding: var(--space-6);
+  background: var(--color-surface);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
+}
+
+.auth__title {
+  font-size: var(--text-xl);
+  margin-bottom: var(--space-1);
+}
+
+.auth__subtitle {
+  margin-bottom: var(--space-5);
+  color: var(--color-muted);
+}
+
+@media (min-width: 52rem) {
+  .auth {
+    grid-template-columns: 1.1fr 1fr;
+  }
+
+  .auth__brand {
+    padding: var(--space-7);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+  }
+}

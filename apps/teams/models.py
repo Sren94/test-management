@@ -18,6 +18,12 @@ class Role(models.Model):
 
     def __str__(self) -> str:
         return self.name
+    #Label in spanish
+    @property
+    def label(self) -> str:
+        """Spanish label shown in the UI. The stored name stays in English."""
+        labels = {RoleName.LEADER: "Líder", RoleName.TESTER: "Tester"}
+        return labels.get(self.name, self.name.capitalize())
 
 
 class Team(models.Model):
