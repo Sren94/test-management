@@ -1,6 +1,7 @@
 from django import forms
 
 from apps.accounts.models import User
+from apps.teams.models import Team
 
 
 class UserCreateForm(forms.ModelForm):
@@ -40,3 +41,18 @@ class UserUpdateForm(forms.ModelForm):
 
     def clean_email(self):
         return self.cleaned_data["email"].lower()
+
+
+class TeamForm(forms.ModelForm):
+    """Create and edit a team. Members and roles are handled separately."""
+
+    class Meta:
+        model = Team
+        fields = ("name",)
+        labels = {"name": "Nombre del equipo"}
+
+    def clean_name(self):
+        name = " ".join(self.cleaned_data["name"].split())  # trims and collapses spaces
+        if Team.objects.name_exists(name, exclude_pk=self.instance.pk):
+            raise forms.ValidationError("Ya existe un equipo con ese nombre.")
+        return name
