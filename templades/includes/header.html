@@ -17,6 +17,7 @@
 
         <ul class="menu__list">
           {% if user.is_admin %}
+            <li><a class="menu__item" href="{% url 'panel:user_list' %}">Usuarios</a></li>
             <li><a class="menu__item" href="#">Crear equipo</a></li>
             <li><a class="menu__item" href="#">Asignar testers</a></li>
           {% endif %}

@@ -15,6 +15,14 @@
     {% endif %}
   {% endblock %}
 
+  {% if messages %}
+    <div class="page page--flush">
+      {% for message in messages %}
+        <p class="alert alert--{% if message.tags == 'error' %}error{% else %}success{% endif %}">{{ message }}</p>
+      {% endfor %}
+    </div>
+  {% endif %}
+
   {% block content %}{% endblock %}
 </body>
 </html>
