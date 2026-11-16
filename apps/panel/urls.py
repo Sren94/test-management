@@ -26,4 +26,9 @@ urlpatterns = [
         views.MembershipRemoveView.as_view(),
         name="membership_remove",
     ),
+        path(
+        "users/<int:pk>/reset-password/",
+        views.UserResetPasswordView.as_view(),
+        name="user_reset_password",
+    ),
 ]

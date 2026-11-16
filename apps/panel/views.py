@@ -1,5 +1,5 @@
 from django.contrib import messages
-from django.shortcuts import get_object_or_404, redirect
+from django.shortcuts import get_object_or_404, redirect,render
 from django.urls import reverse_lazy
 from django.views import View
 from django.views.generic import CreateView, DetailView, FormView, ListView, UpdateView
@@ -9,6 +9,7 @@ from apps.teams.models import Membership, Role, Team
 
 from .forms import *
 from .mixins import AdminRequiredMixin
+
 
 # --- Users ------------------------------------------------------------------
 class UserListView(AdminRequiredMixin, ListView):
@@ -78,6 +79,26 @@ class UserToggleActiveView(AdminRequiredMixin, View):
             User.objects.filter(pk=pk).activate()
             messages.success(request, f"Usuario {user.username} activado.")
         return redirect("panel:user_list")
+class UserResetPasswordView(AdminRequiredMixin, View):
+    """Generates a temporary password and shows it ONCE (it is never stored)."""
+
+    def post(self, request, pk):
+        user = get_object_or_404(User, pk=pk)
+        if user == request.user:
+            messages.error(request, "Para cambiar tu propia contraseña usa el menú de tu perfil.")
+            return redirect("panel:user_list")
+        if not user.is_active:
+            messages.error(request, "Activa al usuario antes de restablecer su contraseña.")
+            return redirect("panel:user_list")
+
+        temp_password = User.objects.reset_password(user)
+        response = render(
+            request,
+            "panel/users/temp_password.html",
+            {"target": user, "temp_password": temp_password},
+        )
+        response["Cache-Control"] = "no-store"
+        return response
 
 
 # --- Teams ------------------------------------------------------------------

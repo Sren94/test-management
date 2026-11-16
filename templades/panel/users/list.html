@@ -52,11 +52,19 @@
               </td>
               <td>
                 {% if u.is_active %}<span class="status status--active">Activo</span>{% else %}<span class="status status--inactive">Inactivo</span>{% endif %}
+                {% if u.must_change_password %}<span class="muted">· cambio pendiente</span>{% endif %}
               </td>
               <td>
                 <div class="table__actions">
                   <a class="btn btn--sm btn--secondary" href="{% url 'panel:user_edit' u.pk %}">Editar</a>
                   {% if u != request.user %}
+                    {% if u.is_active %}
+                      <form method="post" action="{% url 'panel:user_reset_password' u.pk %}"
+                            onsubmit="return confirm('¿Generar una contraseña temporal para {{ u.get_full_name|escapejs }}? La actual dejará de funcionar.');">
+                        {% csrf_token %}
+                        <button class="btn btn--sm btn--secondary" type="submit">Restablecer contraseña</button>
+                      </form>
+                    {% endif %}
                     <form method="post" action="{% url 'panel:user_toggle' u.pk %}">
                       {% csrf_token %}
                       <button class="btn btn--sm {% if u.is_active %}btn--danger{% else %}btn--secondary{% endif %}" type="submit">

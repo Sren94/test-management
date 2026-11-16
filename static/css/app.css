@@ -678,3 +678,16 @@ a {
   border: 1.5px solid var(--color-border);
   border-radius: var(--radius-sm);
 }
+/* Temporary password box */
+.secret {
+  margin: var(--space-4) 0;
+  padding: var(--space-4);
+  font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+  font-size: var(--text-xl);
+  letter-spacing: 0.08em;
+  text-align: center;
+  user-select: all;
+  background: var(--color-primary-soft);
+  border: 2px dashed var(--color-primary);
+  border-radius: var(--radius-md);
+}
