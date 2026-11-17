@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}{{ project.name }} · Test Management{% endblock %}
+
+{% block content %}
+<main class="page">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">{{ project.name }}</h1>
+      {% if project.is_active %}
+        <span class="status status--active">Activo</span>
+      {% else %}
+        <span class="status status--inactive">Archivado</span>
+      {% endif %}
+    </div>
+    <a class="btn btn--secondary" href="{% url 'projects:list' %}">← Volver a proyectos</a>
+  </div>
+
+  <section class="card">
+    <dl class="meta">
+      <div><dt>Folio SISAP</dt><dd>{{ project.sisap_folio }}</dd></div>
+      <div><dt>Equipo</dt><dd>{{ project.team.name }}</dd></div>
+      <div><dt>Creado el</dt><dd>{{ project.created_at|date:"d/m/Y" }}</dd></div>
+      <div>
+        <dt>Creado por</dt>
+        <dd>{% if project.created_by %}{{ project.created_by.get_full_name }}{% else %}—{% endif %}</dd>
+      </div>
+    </dl>
+
+    {% if project.can_manage %}
+      <p class="access-note">Tienes permiso para gestionar este proyecto.</p>
+    {% else %}
+      <p class="access-note">
+        Solo puedes ver este proyecto. Para modificarlo, pide a una persona asignada
+        o a un líder del equipo que te agregue.
+      </p>
+    {% endif %}
+  </section>
+
+  <section class="card">
+    <h2 class="section-title">Personas asignadas</h2>
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr><th>Nombre</th><th>Usuario</th><th>Asignado el</th></tr>
+        </thead>
+        <tbody>
+          {% for a in assignments %}
+            <tr>
+              <td>{{ a.user.get_full_name }}</td>
+              <td>{{ a.user.username }}</td>
+              <td>{{ a.assigned_at|date:"d/m/Y" }}</td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="3" class="muted">Este proyecto aún no tiene personas asignadas.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+</main>
+{% endblock %}

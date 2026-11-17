@@ -83,3 +83,30 @@ def test_users_of_other_teams_and_without_team_manage_nothing(scenario):
 
 def test_admin_manages_everything(scenario, sysadmin):
     assert names(Project.objects.manageable_by(sysadmin)) == ["Proyecto Movil", "Proyecto Web"]
+
+# --- search, counts and flags -----------------------------------------------
+def test_search_by_name_or_folio(scenario):
+    assert names(Project.objects.search("Web")) == ["Proyecto Web"]
+    assert names(Project.objects.search("M-1")) == ["Proyecto Movil"]
+    assert names(Project.objects.search("")) == ["Proyecto Movil", "Proyecto Web"]
+
+
+def test_assignee_count_only_counts_current_assignments(scenario, assign_to_project):
+    assign_to_project(scenario.p_web, scenario.tester_out)
+    ProjectAssignment.objects.filter(project=scenario.p_web, user=scenario.tester_out).update(
+        removed_at=timezone.now()
+    )
+    counted = Project.objects.with_assignee_count().get(pk=scenario.p_web.pk)
+    assert counted.assignees_count == 1
+
+
+def flags_for(project, user):
+    found = Project.objects.with_user_flags(user).get(pk=project.pk)
+    return found.is_assigned, found.can_manage
+
+
+def test_flags_for_each_kind_of_user(scenario, sysadmin):
+    assert flags_for(scenario.p_web, scenario.tester_in) == (True, True)
+    assert flags_for(scenario.p_web, scenario.lead_web) == (False, True)
+    assert flags_for(scenario.p_web, scenario.tester_out) == (False, False)
+    assert flags_for(scenario.p_web, sysadmin) == (False, True)

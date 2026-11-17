@@ -1,5 +1,5 @@
 from django.db import models
-from django.db.models import Exists, OuterRef
+from django.db.models import BooleanField, Count, ExpressionWrapper, Exists, OuterRef, Q, Value
 
 
 # --- Project ----------------------------------------------------------------
@@ -10,9 +10,43 @@ class ProjectQuerySet(models.QuerySet):
     def archived(self):
         return self.filter(is_active=False)
 
+    def search(self, term):
+        """Case-insensitive search by name or SISAP folio."""
+        if not term:
+            return self
+        return self.filter(Q(name__icontains=term) | Q(sisap_folio__icontains=term))
+
     def with_details(self):
         """Loads team and creator in the same query (no extra query per row)."""
         return self.select_related("team", "created_by")
+
+    def with_assignee_count(self):
+        """Adds assignees_count: people currently assigned."""
+        return self.annotate(
+            assignees_count=Count("assignments", filter=Q(assignments__removed_at__isnull=True))
+        )
+
+    def with_user_flags(self, user):
+        """Adds is_assigned and can_manage for this user, in the same query."""
+        from apps.teams.models import Membership, RoleName
+
+        from .models import ProjectAssignment
+
+        is_assigned = Exists(
+            ProjectAssignment.objects.current().filter(project=OuterRef("pk"), user=user)
+        )
+        if user.is_superuser:
+            can_manage = Value(True, output_field=BooleanField())
+        else:
+            leads_the_team = Exists(
+                Membership.objects.filter(
+                    team=OuterRef("team"), user=user, role__name=RoleName.LEADER
+                )
+            )
+            can_manage = ExpressionWrapper(
+                leads_the_team | is_assigned, output_field=BooleanField()
+            )
+        return self.annotate(is_assigned=is_assigned, can_manage=can_manage)
 
     def visible_to(self, user):
         """Projects the user can SEE: every project of the teams they belong to.
@@ -57,6 +91,10 @@ class ProjectAssignmentQuerySet(models.QuerySet):
     def current(self):
         """Assignments that are still in force (not closed)."""
         return self.filter(removed_at__isnull=True)
+
+    def with_user(self):
+        """Loads the user and orders by name."""
+        return self.select_related("user").order_by("user__first_name", "user__last_name")
 
 
 class ProjectAssignmentManager(models.Manager.from_queryset(ProjectAssignmentQuerySet)):
