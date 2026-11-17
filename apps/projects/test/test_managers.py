@@ -110,3 +110,10 @@ def test_flags_for_each_kind_of_user(scenario, sysadmin):
     assert flags_for(scenario.p_web, scenario.lead_web) == (False, True)
     assert flags_for(scenario.p_web, scenario.tester_out) == (False, False)
     assert flags_for(scenario.p_web, sysadmin) == (False, True)
+def test_of_member_returns_only_active_teams_of_the_user(make_user, make_team, tester_role):
+    user = make_user("ana")
+    live, dead = make_team("Live"), make_team("Dead", is_active=False)
+    make_team("Other")
+    Membership.objects.assign(user=user, team=live, role=tester_role)
+    Membership.objects.assign(user=user, team=dead, role=tester_role)
+    assert names(Team.objects.of_member(user)) == ["Live"]

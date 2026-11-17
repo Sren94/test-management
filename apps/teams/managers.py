@@ -33,6 +33,9 @@ class TeamQuerySet(models.QuerySet):
         if status == "inactive":
             return self.inactive()
         return self
+    def of_member(self, user):
+        """Active teams the user belongs to, with any role."""
+        return self.active().filter(memberships__user=user)
 
     def with_counts(self):
         """Adds leaders_count and testers_count (only active users) in one query."""
@@ -57,6 +60,11 @@ class TeamQuerySet(models.QuerySet):
 
     def activate(self):
         return self.update(is_active=True, updated_at=timezone.now())
+    def visible_to(self, user):
+        """Active teams the user can pick in filters: all for admins, their own otherwise."""
+        if user.is_superuser:
+            return self.active()
+        return self.of_member(user)
 
 
 class TeamManager(models.Manager.from_queryset(TeamQuerySet)):

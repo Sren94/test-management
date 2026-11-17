@@ -12,7 +12,13 @@
         <span class="status status--inactive">Archivado</span>
       {% endif %}
     </div>
-    <a class="btn btn--secondary" href="{% url 'projects:list' %}">← Volver a proyectos</a>
+    <div class="table__actions">
+      {% if project.can_manage %}
+        <a class="btn" href="{% url 'projects:edit' project.pk %}">Editar</a>
+      {% endif %}
+      <a class="btn btn--secondary" href="{% url 'projects:list' %}">← Volver a proyectos</a>
+    </div>
+    
   </div>
 
   <section class="card">

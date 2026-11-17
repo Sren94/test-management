@@ -88,3 +88,21 @@ def test_set_role_only_changes_the_selected_membership(
     second.refresh_from_db()
     assert first.role == leader_role
     assert second.role == tester_role
+    
+def test_of_member_returns_only_active_teams_of_the_user(make_user, make_team, tester_role):
+    user = make_user("ana")
+    live, dead = make_team("Live"), make_team("Dead", is_active=False)
+    make_team("Other")
+    Membership.objects.assign(user=user, team=live, role=tester_role)
+    Membership.objects.assign(user=user, team=dead, role=tester_role)
+    assert names(Team.objects.of_member(user)) == ["Live"]
+    
+def test_visible_to_gives_admins_every_active_team_and_users_their_own(
+    make_user, make_team, tester_role, sysadmin
+):
+    user = make_user("ana")
+    mine, other = make_team("Mine"), make_team("Other")
+    make_team("Dead", is_active=False)
+    Membership.objects.assign(user=user, team=mine, role=tester_role)
+    assert names(Team.objects.visible_to(user)) == ["Mine"]
+    assert names(Team.objects.visible_to(sysadmin)) == ["Mine", "Other"]

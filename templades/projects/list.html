@@ -5,6 +5,7 @@
 <main class="page">
   <div class="page-header">
     <h1 class="page-title">Proyectos</h1>
+    {% if can_create %}<a class="btn" href="{% url 'projects:create' %}">Nuevo proyecto</a>{% endif %}
   </div>
 
   <section class="card">

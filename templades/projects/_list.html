@@ -1,4 +1,17 @@
+{% if filter_teams|length > 1 %}
+  <div class="filters" role="group" aria-label="Filtrar por equipo">
+    <span class="filters__label">Filtrar por equipo:</span>
+    <a class="filter-chip {% if not selected_team %}is-active{% endif %}"
+       href="?{% if q %}q={{ q|urlencode }}{% endif %}">Todos</a>
+    {% for t in filter_teams %}
+      <a class="filter-chip {% if selected_team.pk == t.pk %}is-active{% endif %}"
+         href="?team={{ t.pk }}{% if q %}&q={{ q|urlencode }}{% endif %}">{{ t.name }}</a>
+    {% endfor %}
+  </div>
+{% endif %}
+
 <form class="toolbar" method="get">
+  {% if selected_team %}<input type="hidden" name="team" value="{{ selected_team.pk }}">{% endif %}
   <div class="field">
     <label for="q">Buscar</label>
     <input id="q" type="search" name="q" value="{{ q }}" placeholder="Nombre o folio SISAP">
@@ -45,11 +58,11 @@
 {% if is_paginated %}
   <nav class="pagination" aria-label="Paginación">
     {% if page_obj.has_previous %}
-      <a href="?page={{ page_obj.previous_page_number }}&q={{ q }}">← Anterior</a>
+      <a href="?page={{ page_obj.previous_page_number }}&q={{ q|urlencode }}{% if selected_team %}&team={{ selected_team.pk }}{% endif %}">← Anterior</a>
     {% endif %}
     <span class="muted">Página {{ page_obj.number }} de {{ paginator.num_pages }}</span>
     {% if page_obj.has_next %}
-      <a href="?page={{ page_obj.next_page_number }}&q={{ q }}">Siguiente →</a>
+      <a href="?page={{ page_obj.next_page_number }}&q={{ q|urlencode }}{% if selected_team %}&team={{ selected_team.pk }}{% endif %}">Siguiente →</a>
     {% endif %}
   </nav>
 {% endif %}

@@ -1,4 +1,4 @@
-from django.db import models
+from django.db import models, transaction
 from django.db.models import BooleanField, Count, ExpressionWrapper, Exists, OuterRef, Q, Value
 
 
@@ -15,6 +15,11 @@ class ProjectQuerySet(models.QuerySet):
         if not term:
             return self
         return self.filter(Q(name__icontains=term) | Q(sisap_folio__icontains=term))
+    def for_team(self, team):
+        """Only the projects of one team (None = no filter)."""
+        if team is None:
+            return self
+        return self.filter(team=team)
 
     def with_details(self):
         """Loads team and creator in the same query (no extra query per row)."""
@@ -82,9 +87,6 @@ class ProjectQuerySet(models.QuerySet):
         return self.visible_to(user).filter(Exists(leads_the_team) | Exists(is_assigned))
 
 
-class ProjectManager(models.Manager.from_queryset(ProjectQuerySet)):
-    pass
-
 
 # --- ProjectAssignment ------------------------------------------------------
 class ProjectAssignmentQuerySet(models.QuerySet):
@@ -99,3 +101,14 @@ class ProjectAssignmentQuerySet(models.QuerySet):
 
 class ProjectAssignmentManager(models.Manager.from_queryset(ProjectAssignmentQuerySet)):
     pass
+class ProjectManager(models.Manager.from_queryset(ProjectQuerySet)):
+    @transaction.atomic
+    def create_with_creator(self, *, name, sisap_folio, team, created_by):
+        """Creates the project and assigns its creator, in one transaction."""
+        from .models import ProjectAssignment
+
+        project = self.create(
+            name=name, sisap_folio=sisap_folio, team=team, created_by=created_by
+        )
+        ProjectAssignment.objects.create(project=project, user=created_by)
+        return project
