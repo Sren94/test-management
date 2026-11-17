@@ -29,6 +29,7 @@
         <th>Creado</th>
         <th>Asignados</th>
         <th>Mi acceso</th>
+        {% if archived %}<th>Acciones</th>{% endif %}
       </tr>
     </thead>
     <tbody>
@@ -47,9 +48,26 @@
             {% endif %}
             {% if p.is_assigned %}<span class="badge badge--sm">Asignado</span>{% endif %}
           </td>
+          {% if archived %}
+            <td>
+              {% if p.can_manage %}
+                <form method="post" action="{% url 'projects:reactivate' p.pk %}"
+                      onsubmit="return confirm('¿Reactivar el proyecto {{ p.name|escapejs }}?');">
+                  {% csrf_token %}
+                  <button class="btn btn--sm btn--secondary" type="submit">Reactivar</button>
+                </form>
+              {% else %}
+                <span class="muted">—</span>
+              {% endif %}
+            </td>
+          {% endif %}
         </tr>
       {% empty %}
-        <tr><td colspan="6" class="muted">No hay proyectos para mostrar.</td></tr>
+        <tr>
+          <td colspan="{% if archived %}7{% else %}6{% endif %}" class="muted">
+            {% if archived %}No hay proyectos archivados.{% else %}No hay proyectos para mostrar.{% endif %}
+          </td>
+        </tr>
       {% endfor %}
     </tbody>
   </table>

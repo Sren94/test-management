@@ -117,3 +117,21 @@ def test_of_member_returns_only_active_teams_of_the_user(make_user, make_team, t
     Membership.objects.assign(user=user, team=live, role=tester_role)
     Membership.objects.assign(user=user, team=dead, role=tester_role)
     assert names(Team.objects.of_member(user)) == ["Live"]
+# --- archive / reactivate ---------------------------------------------------
+def test_archive_and_reactivate_keep_the_assignments(scenario):
+    queryset = Project.objects.filter(pk=scenario.p_web.pk)
+    assert queryset.archive() == 1
+    scenario.p_web.refresh_from_db()
+    assert scenario.p_web.is_active is False
+    assert ProjectAssignment.objects.current().filter(project=scenario.p_web).count() == 1
+    assert queryset.reactivate() == 1
+    scenario.p_web.refresh_from_db()
+    assert scenario.p_web.is_active is True
+
+
+def test_archive_and_reactivate_only_change_what_needs_changing(scenario):
+    queryset = Project.objects.filter(pk=scenario.p_web.pk)
+    assert queryset.reactivate() == 0  # already active
+    queryset.archive()
+    assert queryset.archive() == 0  # already archived
+    assert Project.objects.get(pk=scenario.p_mobile.pk).is_active is True

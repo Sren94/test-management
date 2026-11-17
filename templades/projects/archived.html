@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}Proyectos archivados · Test Management{% endblock %}
+
+{% block content %}
+<main class="page">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Proyectos archivados</h1>
+      <p class="muted">Conservan sus asignaciones. Quien los gestiona puede reactivarlos.</p>
+    </div>
+    <a class="btn btn--secondary" href="{% url 'projects:list' %}">← Volver a proyectos</a>
+  </div>
+
+  <section class="card">
+    {% include "projects/_list.html" %}
+  </section>
+</main>
+{% endblock %}

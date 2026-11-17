@@ -16,9 +16,12 @@
         </summary>
 
         <ul class="menu__list">
+          <li><a class="menu__item" href="{% url 'projects:archived' %}">Proyectos archivados</a></li>
           {% if user.is_admin %}
             <li><a class="menu__item" href="{% url 'panel:user_list' %}">Usuarios</a></li>
             <li><a class="menu__item" href="{% url 'panel:team_list' %}">Equipos</a></li>
+            <li><a class="menu__item" href="{% url 'panel:team_create' %}">Crear equipo</a></li>
+            <li><a class="menu__item" href="{% url 'panel:team_list' %}">Asignar testers</a></li>
           {% endif %}
           <li><a class="menu__item" href="{% url 'accounts:password_change' %}">Cambiar contraseña</a></li>
           <li>

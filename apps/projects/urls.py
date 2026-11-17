@@ -6,7 +6,10 @@ app_name = "projects"
 
 urlpatterns = [
     path("", views.ProjectListView.as_view(), name="list"),
+    path("archived/", views.ArchivedProjectListView.as_view(), name="archived"),
     path("new/", views.ProjectCreateView.as_view(), name="create"),
     path("<int:pk>/", views.ProjectDetailView.as_view(), name="detail"),
     path("<int:pk>/edit/", views.ProjectUpdateView.as_view(), name="edit"),
+    path("<int:pk>/archive/", views.ProjectArchiveView.as_view(), name="archive"),
+    path("<int:pk>/reactivate/", views.ProjectReactivateView.as_view(), name="reactivate"),
 ]

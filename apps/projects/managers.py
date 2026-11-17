@@ -1,7 +1,6 @@
 from django.db import models, transaction
 from django.db.models import BooleanField, Count, ExpressionWrapper, Exists, OuterRef, Q, Value
-
-
+from django.utils import timezone
 # --- Project ----------------------------------------------------------------
 class ProjectQuerySet(models.QuerySet):
     def active(self):
@@ -85,6 +84,13 @@ class ProjectQuerySet(models.QuerySet):
             project=OuterRef("pk"), user=user
         )
         return self.visible_to(user).filter(Exists(leads_the_team) | Exists(is_assigned))
+    def archive(self):
+        """Archives the active projects of this queryset. Returns how many changed."""
+        return self.filter(is_active=True).update(is_active=False, updated_at=timezone.now())
+
+    def reactivate(self):
+        """Reactivates the archived projects of this queryset. Returns how many changed."""
+        return self.filter(is_active=False).update(is_active=True, updated_at=timezone.now())
 
 
 

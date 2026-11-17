@@ -1,7 +1,9 @@
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import PermissionDenied
+from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse, reverse_lazy
+from django.views import View
 from django.views.generic import DetailView, FormView, ListView, UpdateView
 
 from apps.teams.models import Team
@@ -17,6 +19,7 @@ class ProjectListView(LoginRequiredMixin, ListView):
     template_name = "projects/list.html"
     context_object_name = "projects"
     paginate_by = 20
+    archived = False  # the archived list reuses this view
 
     def get_filter_teams(self):
         if not hasattr(self, "_filter_teams"):
@@ -35,10 +38,10 @@ class ProjectListView(LoginRequiredMixin, ListView):
 
     def get_queryset(self):
         user = self.request.user
+        projects = Project.objects.visible_to(user)
+        projects = projects.archived() if self.archived else projects.active()
         return (
-            Project.objects.visible_to(user)
-            .active()
-            .for_team(self.get_selected_team())
+            projects.for_team(self.get_selected_team())
             .search(self.request.GET.get("q", "").strip())
             .with_details()
             .with_assignee_count()
@@ -52,6 +55,7 @@ class ProjectListView(LoginRequiredMixin, ListView):
         context["filter_teams"] = self.get_filter_teams()
         context["selected_team"] = self.get_selected_team()
         context["can_create"] = Team.objects.of_member(self.request.user).exists()
+        context["archived"] = self.archived
         return context
 
 
@@ -59,6 +63,13 @@ class HomeView(ProjectListView):
     """Landing page: the same list of projects, right under the header."""
 
     template_name = "home.html"
+
+
+class ArchivedProjectListView(ProjectListView):
+    """Archived projects the user can see: the whole team can see them."""
+
+    template_name = "projects/archived.html"
+    archived = True
 
 
 class ProjectDetailView(LoginRequiredMixin, DetailView):
@@ -77,6 +88,8 @@ class ProjectDetailView(LoginRequiredMixin, DetailView):
             ProjectAssignment.objects.current().filter(project=self.object).with_user()
         )
         return context
+
+
 class ProjectCreateView(CanCreateProjectMixin, FormView):
     template_name = "projects/form.html"
     form_class = ProjectCreateForm
@@ -129,3 +142,38 @@ class ProjectUpdateView(LoginRequiredMixin, UpdateView):
 
     def get_success_url(self):
         return reverse("projects:detail", args=[self.object.pk])
+
+
+class ProjectStateView(LoginRequiredMixin, View):
+    """Base for archive / reactivate. POST only.
+
+    Not visible -> 404. Visible but view-only -> 403.
+    """
+
+    def get_project(self, pk):
+        user = self.request.user
+        project = get_object_or_404(
+            Project.objects.visible_to(user).with_user_flags(user), pk=pk
+        )
+        if not project.can_manage:
+            raise PermissionDenied
+        return project
+
+
+class ProjectArchiveView(ProjectStateView):
+    def post(self, request, pk):
+        project = self.get_project(pk)
+        if Project.objects.filter(pk=project.pk).archive():
+            messages.success(
+                request,
+                f"Proyecto {project.name} archivado. Lo encuentras en Proyectos archivados.",
+            )
+        return redirect("projects:list")
+
+
+class ProjectReactivateView(ProjectStateView):
+    def post(self, request, pk):
+        project = self.get_project(pk)
+        if Project.objects.filter(pk=project.pk).reactivate():
+            messages.success(request, f"Proyecto {project.name} reactivado.")
+        return redirect("projects:detail", pk=project.pk)

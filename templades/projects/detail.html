@@ -15,10 +15,22 @@
     <div class="table__actions">
       {% if project.can_manage %}
         <a class="btn" href="{% url 'projects:edit' project.pk %}">Editar</a>
+        {% if project.is_active %}
+          <form method="post" action="{% url 'projects:archive' project.pk %}"
+                onsubmit="return confirm('¿Archivar este proyecto? Saldrá de la lista, pero conserva sus asignaciones y podrás reactivarlo.');">
+            {% csrf_token %}
+            <button class="btn btn--danger" type="submit">Archivar</button>
+          </form>
+        {% else %}
+          <form method="post" action="{% url 'projects:reactivate' project.pk %}">
+            {% csrf_token %}
+            <button class="btn" type="submit">Reactivar</button>
+          </form>
+        {% endif %}
       {% endif %}
-      <a class="btn btn--secondary" href="{% url 'projects:list' %}">← Volver a proyectos</a>
+      <a class="btn btn--secondary"
+         href="{% if project.is_active %}{% url 'projects:list' %}{% else %}{% url 'projects:archived' %}{% endif %}">← Volver</a>
     </div>
-    
   </div>
 
   <section class="card">
