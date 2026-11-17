@@ -4,65 +4,11 @@
 {% block content %}
 <main class="page">
   <div class="page-header">
-    <h1 class="page-title">Mis proyectos</h1>
+    <h1 class="page-title">Proyectos</h1>
   </div>
 
   <section class="card">
-    <form class="toolbar" method="get">
-      <div class="field">
-        <label for="q">Buscar</label>
-        <input id="q" type="search" name="q" value="{{ q }}" placeholder="Nombre o folio SISAP">
-      </div>
-      <button class="btn btn--secondary" type="submit">Buscar</button>
-    </form>
-
-    <div class="table-wrap">
-      <table class="table">
-        <thead>
-          <tr>
-            <th>Folio SISAP</th>
-            <th>Nombre</th>
-            <th>Equipo</th>
-            <th>Creado</th>
-            <th>Asignados</th>
-            <th>Mi acceso</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for p in projects %}
-            <tr>
-              <td>{{ p.sisap_folio }}</td>
-              <td><a href="{% url 'projects:detail' p.pk %}">{{ p.name }}</a></td>
-              <td>{{ p.team.name }}</td>
-              <td>{{ p.created_at|date:"d/m/Y" }}</td>
-              <td>{{ p.assignees_count }}</td>
-              <td>
-                {% if p.can_manage %}
-                  <span class="status status--active">Gestiono</span>
-                {% else %}
-                  <span class="muted">Solo ver</span>
-                {% endif %}
-                {% if p.is_assigned %}<span class="badge badge--sm">Asignado</span>{% endif %}
-              </td>
-            </tr>
-          {% empty %}
-            <tr><td colspan="6" class="muted">No hay proyectos para mostrar.</td></tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
-
-    {% if is_paginated %}
-      <nav class="pagination" aria-label="Paginación">
-        {% if page_obj.has_previous %}
-          <a href="?page={{ page_obj.previous_page_number }}&q={{ q }}">← Anterior</a>
-        {% endif %}
-        <span class="muted">Página {{ page_obj.number }} de {{ paginator.num_pages }}</span>
-        {% if page_obj.has_next %}
-          <a href="?page={{ page_obj.next_page_number }}&q={{ q }}">Siguiente →</a>
-        {% endif %}
-      </nav>
-    {% endif %}
+    {% include "projects/_list.html" %}
   </section>
 </main>
 {% endblock %}

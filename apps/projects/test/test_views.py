@@ -93,3 +93,21 @@ def test_detail_lists_only_current_assignments(login, scenario, assign_to_projec
     )
     response = login(scenario.lead_web).get(reverse("projects:detail", args=[scenario.p_web.pk]))
     assert [a.user.username for a in response.context["assignments"]] == ["tester_in"]
+# --- home -------------------------------------------------------------------
+def test_home_lists_the_users_projects(login, scenario):
+    response = login(scenario.tester_in).get(reverse("home"))
+    assert response.status_code == 200
+    assert listed(response) == ["Proyecto Web"]
+
+
+def test_home_for_a_user_without_projects(login, scenario):
+    response = login(scenario.nobody).get(reverse("home"))
+    assert response.status_code == 200
+    assert listed(response) == []
+    assert "No hay proyectos para mostrar" in response.content.decode()
+
+
+def test_home_requires_login(client):
+    response = client.get(reverse("home"))
+    assert response.status_code == 302
+    assert "/accounts/login/" in response["Location"]

@@ -3,9 +3,12 @@
 
 {% block content %}
 <main class="page">
+  <div class="page-header">
+    <h1 class="page-title">Mis proyectos</h1>
+  </div>
+
   <section class="card">
-    <h2 class="section-title">Bienvenido, {{ user.first_name }}</h2>
-    <p class="muted">Aquí aparecerán tus proyectos y pruebas.</p>
+    {% include "projects/_list.html" %}
   </section>
 </main>
 {% endblock %}

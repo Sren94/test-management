@@ -29,6 +29,12 @@ class ProjectListView(LoginRequiredMixin, ListView):
         return context
 
 
+class HomeView(ProjectListView):
+    """Landing page: the same list of projects, right under the header."""
+
+    template_name = "home.html"
+
+
 class ProjectDetailView(LoginRequiredMixin, DetailView):
     """A project the user can see. Anything else is a 404."""
 
