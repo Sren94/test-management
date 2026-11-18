@@ -1,9 +1,9 @@
 from django import forms
 
+from apps.accounts.models import User
 from apps.teams.models import Team
 
-from .models import Project
-
+from .models import Project, ProjectAssignment
 
 class ProjectCreateForm(forms.ModelForm):
     class Meta:
@@ -44,3 +44,16 @@ class ProjectUpdateForm(forms.ModelForm):
 
     def clean_name(self):
         return " ".join(self.cleaned_data["name"].split())
+class ProjectAssignForm(forms.Form):
+    """Picks a person of the project's team who is not assigned yet."""
+
+    user = forms.ModelChoiceField(
+        label="Persona",
+        queryset=User.objects.none(),
+        empty_label="Selecciona una persona",
+    )
+
+    def __init__(self, *args, project, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["user"].queryset = ProjectAssignment.objects.candidates(project)
+        self.fields["user"].label_from_instance = lambda u: f"{u.get_full_name()} ({u.username})"

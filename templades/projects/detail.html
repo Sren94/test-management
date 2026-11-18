@@ -59,7 +59,12 @@
     <div class="table-wrap">
       <table class="table">
         <thead>
-          <tr><th>Nombre</th><th>Usuario</th><th>Asignado el</th></tr>
+          <tr>
+            <th>Nombre</th>
+            <th>Usuario</th>
+            <th>Asignado el</th>
+            {% if project.can_manage %}<th>Acciones</th>{% endif %}
+          </tr>
         </thead>
         <tbody>
           {% for a in assignments %}
@@ -67,13 +72,68 @@
               <td>{{ a.user.get_full_name }}</td>
               <td>{{ a.user.username }}</td>
               <td>{{ a.assigned_at|date:"d/m/Y" }}</td>
+              {% if project.can_manage %}
+                <td>
+                  <form method="post" action="{% url 'projects:unassign' project.pk a.pk %}"
+                        onsubmit="return confirm('{% if a.user_id == user.pk %}¿Quitarte de este proyecto? Si no eres líder del equipo, perderás el permiso para gestionarlo.{% else %}¿Quitar a {{ a.user.get_full_name|escapejs }} del proyecto? Quedará en el historial.{% endif %}');">
+                    {% csrf_token %}
+                    <button class="btn btn--sm btn--danger" type="submit">Quitar</button>
+                  </form>
+                </td>
+              {% endif %}
             </tr>
           {% empty %}
-            <tr><td colspan="3" class="muted">Este proyecto aún no tiene personas asignadas.</td></tr>
+            <tr>
+              <td colspan="{% if project.can_manage %}4{% else %}3{% endif %}" class="muted">
+                Este proyecto aún no tiene personas asignadas.
+              </td>
+            </tr>
           {% endfor %}
         </tbody>
       </table>
     </div>
+  </section>
+
+  {% if project.can_manage %}
+    <section class="card form-card">
+      <h2 class="section-title">Asignar persona</h2>
+      {% if assign_form.fields.user.queryset.exists %}
+        <form method="post" action="{% url 'projects:assign' project.pk %}" novalidate>
+          {% csrf_token %}
+          {% include "includes/field.html" with field=assign_form.user %}
+          <div class="form-actions">
+            <button class="btn" type="submit">Asignar</button>
+          </div>
+        </form>
+      {% else %}
+        <p class="muted">No hay más personas disponibles en el equipo {{ project.team.name }}.</p>
+      {% endif %}
+    </section>
+  {% endif %}
+
+  <section class="card">
+    <details class="disclosure">
+      <summary>Historial de asignaciones ({{ history|length }})</summary>
+      <div class="table-wrap">
+        <table class="table">
+          <thead>
+            <tr><th>Nombre</th><th>Usuario</th><th>Asignado el</th><th>Quitado el</th></tr>
+          </thead>
+          <tbody>
+            {% for a in history %}
+              <tr>
+                <td>{{ a.user.get_full_name }}</td>
+                <td>{{ a.user.username }}</td>
+                <td>{{ a.assigned_at|date:"d/m/Y" }}</td>
+                <td>{{ a.removed_at|date:"d/m/Y" }}</td>
+              </tr>
+            {% empty %}
+              <tr><td colspan="4" class="muted">Nadie ha sido quitado de este proyecto.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </details>
   </section>
 </main>
 {% endblock %}

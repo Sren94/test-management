@@ -12,4 +12,10 @@ urlpatterns = [
     path("<int:pk>/edit/", views.ProjectUpdateView.as_view(), name="edit"),
     path("<int:pk>/archive/", views.ProjectArchiveView.as_view(), name="archive"),
     path("<int:pk>/reactivate/", views.ProjectReactivateView.as_view(), name="reactivate"),
+    path("<int:pk>/assign/", views.ProjectAssignView.as_view(), name="assign"),
+    path(
+        "<int:pk>/assignments/<int:assignment_pk>/remove/",
+        views.ProjectUnassignView.as_view(),
+        name="unassign",
+    ),
 ]

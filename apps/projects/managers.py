@@ -1,6 +1,8 @@
 from django.db import models, transaction
 from django.db.models import BooleanField, Count, ExpressionWrapper, Exists, OuterRef, Q, Value
 from django.utils import timezone
+
+
 # --- Project ----------------------------------------------------------------
 class ProjectQuerySet(models.QuerySet):
     def active(self):
@@ -9,11 +11,20 @@ class ProjectQuerySet(models.QuerySet):
     def archived(self):
         return self.filter(is_active=False)
 
+    def archive(self):
+        """Archives the active projects of this queryset. Returns how many changed."""
+        return self.filter(is_active=True).update(is_active=False, updated_at=timezone.now())
+
+    def reactivate(self):
+        """Reactivates the archived projects of this queryset. Returns how many changed."""
+        return self.filter(is_active=False).update(is_active=True, updated_at=timezone.now())
+
     def search(self, term):
         """Case-insensitive search by name or SISAP folio."""
         if not term:
             return self
         return self.filter(Q(name__icontains=term) | Q(sisap_folio__icontains=term))
+
     def for_team(self, team):
         """Only the projects of one team (None = no filter)."""
         if team is None:
@@ -84,29 +95,8 @@ class ProjectQuerySet(models.QuerySet):
             project=OuterRef("pk"), user=user
         )
         return self.visible_to(user).filter(Exists(leads_the_team) | Exists(is_assigned))
-    def archive(self):
-        """Archives the active projects of this queryset. Returns how many changed."""
-        return self.filter(is_active=True).update(is_active=False, updated_at=timezone.now())
-
-    def reactivate(self):
-        """Reactivates the archived projects of this queryset. Returns how many changed."""
-        return self.filter(is_active=False).update(is_active=True, updated_at=timezone.now())
 
 
-
-# --- ProjectAssignment ------------------------------------------------------
-class ProjectAssignmentQuerySet(models.QuerySet):
-    def current(self):
-        """Assignments that are still in force (not closed)."""
-        return self.filter(removed_at__isnull=True)
-
-    def with_user(self):
-        """Loads the user and orders by name."""
-        return self.select_related("user").order_by("user__first_name", "user__last_name")
-
-
-class ProjectAssignmentManager(models.Manager.from_queryset(ProjectAssignmentQuerySet)):
-    pass
 class ProjectManager(models.Manager.from_queryset(ProjectQuerySet)):
     @transaction.atomic
     def create_with_creator(self, *, name, sisap_folio, team, created_by):
@@ -118,3 +108,49 @@ class ProjectManager(models.Manager.from_queryset(ProjectQuerySet)):
         )
         ProjectAssignment.objects.create(project=project, user=created_by)
         return project
+
+
+# --- ProjectAssignment ------------------------------------------------------
+class ProjectAssignmentQuerySet(models.QuerySet):
+    def current(self):
+        """Assignments that are still in force (not closed)."""
+        return self.filter(removed_at__isnull=True)
+
+    def closed(self):
+        """Assignments that were closed: the history."""
+        return self.filter(removed_at__isnull=False)
+
+    def with_user(self):
+        """Loads the user and orders by name."""
+        return self.select_related("user").order_by("user__first_name", "user__last_name")
+
+    def close(self):
+        """Closes these assignments but keeps them as history. Returns how many changed."""
+        return self.filter(removed_at__isnull=True).update(removed_at=timezone.now())
+
+
+class ProjectAssignmentManager(models.Manager.from_queryset(ProjectAssignmentQuerySet)):
+    def candidates(self, project):
+        """Users that can be assigned: active members of the project's team,
+        not currently assigned. Admins never appear (they belong to no team)."""
+        from django.contrib.auth import get_user_model
+
+        assigned = self.current().filter(project=project).values("user")
+        return (
+            get_user_model()
+            .objects.active()
+            .filter(memberships__team=project.team)
+            .exclude(pk__in=assigned)
+            .order_by("first_name", "last_name")
+        )
+
+    @transaction.atomic
+    def assign(self, *, project, user):
+        """Assigns the user to the project.
+
+        Returns None if the user is not an active member of the project's team
+        or is already assigned.
+        """
+        if not self.candidates(project).filter(pk=user.pk).exists():
+            return None
+        return self.create(project=project, user=user)

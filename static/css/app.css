@@ -749,3 +749,13 @@ a {
   color: var(--color-on-primary);
   background: var(--color-primary);
 }
+/* Collapsible history */
+.disclosure summary {
+  cursor: pointer;
+  font-weight: 700;
+  font-size: var(--text-lg);
+}
+
+.disclosure[open] summary {
+  margin-bottom: var(--space-3);
+}

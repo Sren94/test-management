@@ -8,7 +8,7 @@ from django.views.generic import DetailView, FormView, ListView, UpdateView
 
 from apps.teams.models import Team
 
-from .forms import ProjectCreateForm, ProjectUpdateForm
+from .forms import ProjectAssignForm, ProjectCreateForm, ProjectUpdateForm
 from .mixins import CanCreateProjectMixin
 from .models import Project, ProjectAssignment
 
@@ -84,9 +84,18 @@ class ProjectDetailView(LoginRequiredMixin, DetailView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        project = self.object
         context["assignments"] = (
-            ProjectAssignment.objects.current().filter(project=self.object).with_user()
+            ProjectAssignment.objects.current().filter(project=project).with_user()
         )
+        context["history"] = (
+            ProjectAssignment.objects.closed()
+            .filter(project=project)
+            .with_user()
+            .order_by("-removed_at")
+        )
+        if project.can_manage:
+            context["assign_form"] = ProjectAssignForm(project=project)
         return context
 
 
@@ -176,4 +185,36 @@ class ProjectReactivateView(ProjectStateView):
         project = self.get_project(pk)
         if Project.objects.filter(pk=project.pk).reactivate():
             messages.success(request, f"Proyecto {project.name} reactivado.")
+        return redirect("projects:detail", pk=project.pk)
+class ProjectAssignView(ProjectStateView):
+    def post(self, request, pk):
+        project = self.get_project(pk)
+        form = ProjectAssignForm(request.POST, project=project)
+        if form.is_valid():
+            user = form.cleaned_data["user"]
+            if ProjectAssignment.objects.assign(project=project, user=user):
+                messages.success(request, f"{user.get_full_name()} fue asignado al proyecto.")
+            else:
+                messages.error(request, "No se pudo asignar a esa persona.")
+        else:
+            messages.error(
+                request, "Elige a una persona del equipo que aún no esté asignada."
+            )
+        return redirect("projects:detail", pk=project.pk)
+
+
+class ProjectUnassignView(ProjectStateView):
+    """Closes an assignment (it stays in the history)."""
+
+    def post(self, request, pk, assignment_pk):
+        project = self.get_project(pk)
+        assignment = get_object_or_404(
+            ProjectAssignment.objects.current().select_related("user"),
+            pk=assignment_pk,
+            project=project,
+        )
+        ProjectAssignment.objects.filter(pk=assignment.pk).close()
+        messages.success(
+            request, f"{assignment.user.get_full_name()} fue quitado del proyecto."
+        )
         return redirect("projects:detail", pk=project.pk)
