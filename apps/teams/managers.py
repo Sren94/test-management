@@ -1,4 +1,4 @@
-from django.db import models
+from django.db import models, transaction
 from django.db.models import Count, Q
 from django.utils import timezone
 
@@ -33,9 +33,16 @@ class TeamQuerySet(models.QuerySet):
         if status == "inactive":
             return self.inactive()
         return self
+
     def of_member(self, user):
         """Active teams the user belongs to, with any role."""
         return self.active().filter(memberships__user=user)
+
+    def visible_to(self, user):
+        """Active teams the user can pick in filters: all for admins, their own otherwise."""
+        if user.is_superuser:
+            return self.active()
+        return self.of_member(user)
 
     def with_counts(self):
         """Adds leaders_count and testers_count (only active users) in one query."""
@@ -60,11 +67,6 @@ class TeamQuerySet(models.QuerySet):
 
     def activate(self):
         return self.update(is_active=True, updated_at=timezone.now())
-    def visible_to(self, user):
-        """Active teams the user can pick in filters: all for admins, their own otherwise."""
-        if user.is_superuser:
-            return self.active()
-        return self.of_member(user)
 
 
 class TeamManager(models.Manager.from_queryset(TeamQuerySet)):
@@ -108,3 +110,20 @@ class MembershipManager(models.Manager.from_queryset(MembershipQuerySet)):
     def assign(self, *, user, team, role):
         """Puts a user in a team with a role. The role belongs to this team only."""
         return self.create(user=user, team=team, role=role)
+
+    @transaction.atomic
+    def remove(self, membership):
+        """Takes a user out of a team and closes their project assignments there.
+
+        Only the assignments to projects of THIS team are closed (they stay in the
+        history). Assignments in other teams are untouched. Returns how many were
+        closed. Everything happens in one transaction.
+        """
+        # Imported here: projects depends on teams, so a top-level import would be circular.
+        from apps.projects.models import ProjectAssignment
+
+        closed = ProjectAssignment.objects.filter(
+            project__team=membership.team, user=membership.user
+        ).close()
+        membership.delete()
+        return closed

@@ -220,6 +220,9 @@ class MembershipRemoveView(AdminRequiredMixin, View):
             Membership.objects.select_related("user", "team"), pk=membership_pk, team_id=pk
         )
         name, team_name = membership.user.get_full_name(), membership.team.name
-        membership.delete()
-        messages.success(request, f"{name} fue quitado de {team_name}.")
+        closed = Membership.objects.remove(membership)
+        message = f"{name} fue quitado de {team_name}."
+        if closed:
+            message += f" Se cerraron {closed} asignación(es) a proyectos de este equipo."
+        messages.success(request, message)
         return redirect("panel:team_detail", pk=pk)

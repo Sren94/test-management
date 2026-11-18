@@ -49,7 +49,7 @@
               </td>
               <td>
                 <form method="post" action="{% url 'panel:membership_remove' team.pk m.pk %}"
-                      onsubmit="return confirm('¿Quitar a {{ m.user.get_full_name|escapejs }} de este equipo?');">
+                      onsubmit="return confirm('¿Quitar a {{ m.user.get_full_name|escapejs }} de este equipo? Sus asignaciones a proyectos de este equipo se cerrarán y quedarán en el historial.');">
                   {% csrf_token %}
                   <button class="btn btn--sm btn--danger" type="submit">Quitar</button>
                 </form>
